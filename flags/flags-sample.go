@@ -1,12 +1,21 @@
 package main
 
-// Go provides a `flag` package supporting basic
-// command-line flag parsing. We'll use this package to
-// implement our example command-line program.
+// Go provides a `flag` package supporting basic command-line flag parsing.
+// We'll use this package to implement our example command-line program.
 import "flag"
 import "fmt"
+import "os"
 
 func main() {
+    // First let's just iterate over the args, without parsing them.
+	args := os.Args
+    fmt.Printf("Number of args: %d\n", len(args))
+
+	for i := 0; i < len(args); i++ {
+		fmt.Printf(" %s\n", args[i])
+	}
+
+    fmt.Printf("Now parsing the flags...\n");
 
 	// Basic flag declarations are available for string,
 	// integer, and boolean options. Here we declare a
