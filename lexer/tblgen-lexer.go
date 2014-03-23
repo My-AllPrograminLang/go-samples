@@ -12,21 +12,68 @@ const (
 	// Special tokens
 	EOF TokenName = iota
 	ERROR
+
 	COMMENT
 	IDENTIFIER
 	NUMBER
 	QUOTE
+
+	// Operators
+	PLUS
+	MINUS
+	MULTIPLY
+	PERIOD
+	BACKSLASH
+	COLON
+	PERCENT
+	PIPE
+	EXCLAMATION
+	QUESTION
+	POUND
+	AMPERSAND
+	SEMI
+	COMMA
+	L_PAREN
+	R_PAREN
+	L_ANG
+	R_ANG
+	L_BRACE
+	R_BRACE
+	L_BRACKET
+	R_BRACKET
+	EQUALS
 )
 
 var tokenNames = [...]string{
-	EOF:   "EOF",
-	ERROR: "ILLEGAL",
-
-	COMMENT: "COMMENT",
-
-	IDENTIFIER: "IDENTIFIER",
-	NUMBER:     "NUMBER",
-	QUOTE:      "QUOTE",
+	EOF:         "EOF",
+	ERROR:       "ILLEGAL",
+	COMMENT:     "COMMENT",
+	IDENTIFIER:  "IDENTIFIER",
+	NUMBER:      "NUMBER",
+	QUOTE:       "QUOTE",
+	PLUS:        "PLUS",
+	MINUS:       "MINUS",
+	MULTIPLY:    "MULTIPLY",
+	PERIOD:      "PERIOD",
+	BACKSLASH:   "BACKSLASH",
+	COLON:       "COLON",
+	PERCENT:     "PERCENT",
+	PIPE:        "PIPE",
+	EXCLAMATION: "EXCLAMATION",
+	QUESTION:    "QUESTION",
+	POUND:       "POUND",
+	AMPERSAND:   "AMPERSAND",
+	SEMI:        "SEMI",
+	COMMA:       "COMMA",
+	L_PAREN:     "L_PAREN",
+	R_PAREN:     "R_PAREN",
+	L_ANG:       "L_ANG",
+	R_ANG:       "R_ANG",
+	L_BRACE:     "L_BRACE",
+	R_BRACE:     "R_BRACE",
+	L_BRACKET:   "L_BRACKET",
+	R_BRACKET:   "R_BRACKET",
+	EQUALS:      "EQUALS",
 }
 
 type Token struct {
@@ -41,6 +88,32 @@ func (tok Token) String() string {
 
 func makeErrorToken(pos int) Token {
 	return Token{ERROR, "", pos}
+}
+
+var opTable = [...]TokenName{
+	'+':  PLUS,
+	'-':  MINUS,
+	'*':  MULTIPLY,
+	'.':  PERIOD,
+	'\\': BACKSLASH,
+	':':  COLON,
+	'%':  PERCENT,
+	'|':  PIPE,
+	'!':  EXCLAMATION,
+	'?':  QUESTION,
+	'#':  POUND,
+	'&':  AMPERSAND,
+	';':  SEMI,
+	',':  COMMA,
+	'(':  L_PAREN,
+	')':  R_PAREN,
+	'<':  L_ANG,
+	'>':  R_ANG,
+	'{':  L_BRACE,
+	'}':  R_BRACE,
+	'[':  L_BRACKET,
+	']':  R_BRACKET,
+	'=':  EQUALS,
 }
 
 type Lexer struct {
@@ -152,7 +225,6 @@ func isDigit(r rune) bool {
 //------------------------------------------------------------------------------
 
 func main() {
-	//const sample = "本ähello  world"
 	const sample = `foo
 3456 baz "本ä" 3 `
 	fmt.Println(sample)
@@ -160,9 +232,11 @@ func main() {
 	nl := NewLexer([]byte(sample))
 	fmt.Println(nl)
 
-	fmt.Println(nl.NextToken())
-	fmt.Println(nl.NextToken())
-	fmt.Println(nl.NextToken())
-	fmt.Println(nl.NextToken())
-	fmt.Println(nl.NextToken())
+	for {
+		nt := nl.NextToken()
+		fmt.Println(nt)
+		if nt.Name == EOF {
+			break
+		}
+	}
 }
