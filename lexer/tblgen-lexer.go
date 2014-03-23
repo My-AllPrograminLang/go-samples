@@ -2,9 +2,13 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"time"
 	"unicode/utf8"
 )
 
+// TokenName is a type for describing tokens mnemonically.
 type TokenName int
 
 // Values for TokenName
@@ -22,6 +26,7 @@ const (
 	PLUS
 	MINUS
 	MULTIPLY
+	DIVIDE
 	PERIOD
 	BACKSLASH
 	COLON
@@ -54,6 +59,7 @@ var tokenNames = [...]string{
 	PLUS:        "PLUS",
 	MINUS:       "MINUS",
 	MULTIPLY:    "MULTIPLY",
+	DIVIDE:      "DIVIDE",
 	PERIOD:      "PERIOD",
 	BACKSLASH:   "BACKSLASH",
 	COLON:       "COLON",
@@ -76,6 +82,10 @@ var tokenNames = [...]string{
 	EQUALS:      "EQUALS",
 }
 
+// Token represents a single token in the input stream.
+// Name: mnemonic name (numeric).
+// Val: string value of the token from the original stream.
+// Pos: position - offset from beginning of stream.
 type Token struct {
 	Name TokenName
 	Val  string
@@ -90,10 +100,12 @@ func makeErrorToken(pos int) Token {
 	return Token{ERROR, "", pos}
 }
 
+// Operator table for lookups.
 var opTable = [...]TokenName{
 	'+':  PLUS,
 	'-':  MINUS,
 	'*':  MULTIPLY,
+	'/':  DIVIDE,
 	'.':  PERIOD,
 	'\\': BACKSLASH,
 	':':  COLON,
@@ -116,6 +128,11 @@ var opTable = [...]TokenName{
 	'=':  EQUALS,
 }
 
+// Lexer
+//
+// Create a new lexer with NewLexer and then call NextToken repeatedly to get
+// tokens from the stream. The lexer will return a token with the name EOF when
+// done.
 type Lexer struct {
 	buf []byte
 
@@ -129,6 +146,7 @@ type Lexer struct {
 	nextpos int
 }
 
+// NewLexer creates a new lexer for the given input.
 func NewLexer(buf []byte) *Lexer {
 	lex := Lexer{buf, -1, 0, 0}
 
@@ -138,18 +156,29 @@ func NewLexer(buf []byte) *Lexer {
 }
 
 func (lex *Lexer) NextToken() Token {
+	// Skip non-tokens like whitespace and check for EOF.
 	lex.skipNontokens()
-
 	if lex.r < 0 {
 		return Token{EOF, "", lex.nextpos}
 	}
 
-	if int(lex.r) < len(opTable); opName := opTable[lex.r]; opName != ERROR {
+	// Is this an operator?
+	if int(lex.r) < len(opTable) {
+		if opName := opTable[lex.r]; opName != ERROR {
+			if opName == DIVIDE {
+				// Special case: '/' may be the start of a comment.
+				if lex.peekNextByte() == '/' {
+					return lex.scanComment()
+				}
+			}
 			startpos := lex.rpos
 			lex.next()
 			return Token{opName, string(lex.buf[startpos:lex.rpos]), startpos}
 		}
-	} else if isAlpha(lex.r) {
+	}
+
+	// Not an operator. Try other types of tokens.
+	if isAlpha(lex.r) {
 		return lex.scanIdentifier()
 	} else if isDigit(lex.r) {
 		return lex.scanNumber()
@@ -160,6 +189,8 @@ func (lex *Lexer) NextToken() Token {
 	return makeErrorToken(lex.rpos)
 }
 
+// next advances the lexer's internal state to point to the next run in the
+// input.
 func (lex *Lexer) next() {
 	if lex.nextpos < len(lex.buf) {
 		lex.rpos = lex.nextpos
@@ -179,6 +210,17 @@ func (lex *Lexer) next() {
 	} else {
 		lex.rpos = len(lex.buf)
 		lex.r = -1 // EOF
+	}
+}
+
+// peekNextByte returns the next byte in the stream (the one after lex.r).
+// Note: a single byte is peeked at - if there's a rune longer than a byte
+// there, only its first byte is returned.
+func (lex *Lexer) peekNextByte() rune {
+	if lex.nextpos < len(lex.buf) {
+		return rune(lex.buf[lex.nextpos])
+	} else {
+		return -1
 	}
 }
 
@@ -207,7 +249,7 @@ func (lex *Lexer) scanNumber() Token {
 func (lex *Lexer) scanQuote() Token {
 	startpos := lex.rpos
 	lex.next()
-	for lex.r != '"' {
+	for lex.r > 0 && lex.r != '"' {
 		lex.next()
 	}
 
@@ -219,8 +261,20 @@ func (lex *Lexer) scanQuote() Token {
 	}
 }
 
+func (lex *Lexer) scanComment() Token {
+	startpos := lex.rpos
+	lex.next()
+	for lex.r > 0 && lex.r != '\n' {
+		lex.next()
+	}
+
+	tok := Token{COMMENT, string(lex.buf[startpos:lex.rpos]), startpos}
+	lex.next()
+	return tok
+}
+
 func isAlpha(r rune) bool {
-	return 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z' || r == '_'
+	return 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z' || r == '_' || r == '$'
 }
 
 func isDigit(r rune) bool {
@@ -231,17 +285,32 @@ func isDigit(r rune) bool {
 
 func main() {
 	const sample = `foo
-3456 baz "本ä" 3 `
+3456 +  baz "本ä" 3 > 2 // a comment
+// another
+f`
 	fmt.Println(sample)
 
-	nl := NewLexer([]byte(sample))
-	fmt.Println(nl)
+	filebuf, err := ioutil.ReadFile("/tmp/input.td")
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		os.Exit(1)
+	}
 
+	nl := NewLexer(filebuf)
+	//fmt.Println(nl)
+
+	toks := make([]Token, 0, 2000)
+
+	startTime := time.Now()
 	for {
 		nt := nl.NextToken()
-		fmt.Println(nt)
+		toks = append(toks, nt)
 		if nt.Name == EOF {
 			break
 		}
 	}
+	elapsed := time.Now()
+	fmt.Println("Elapsed:", elapsed.Sub(startTime))
+
+	fmt.Println(len(toks), toks[6].Pos)
 }
