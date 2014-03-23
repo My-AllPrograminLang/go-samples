@@ -14,12 +14,18 @@ const (
 	ERROR           = iota
 	COMMENT
 	IDENTIFIER
+	NUMBER
+	QUOTE
 )
 
 type Token struct {
 	Name TokenName
 	Val  string
 	pos  int
+}
+
+func makeErrorToken(pos int) Token {
+	return Token{ERROR, "", pos}
 }
 
 type Lexer struct {
@@ -52,8 +58,12 @@ func (lex *Lexer) NextToken() Token {
 
 	if isAlpha(lex.r) {
 		return lex.scanIdentifier()
+	} else if isDigit(lex.r) {
+		return lex.scanNumber()
+	} else if lex.r == '"' {
+		return lex.scanQuote()
 	} else {
-		return Token{ERROR, "", lex.rpos}
+		return makeErrorToken(lex.rpos)
 	}
 }
 
@@ -93,6 +103,29 @@ func (lex *Lexer) scanIdentifier() Token {
 	return Token{IDENTIFIER, string(lex.buf[startpos:lex.rpos]), startpos}
 }
 
+func (lex *Lexer) scanNumber() Token {
+	startpos := lex.rpos
+	for isDigit(lex.r) {
+		lex.next()
+	}
+	return Token{NUMBER, string(lex.buf[startpos:lex.rpos]), startpos}
+}
+
+func (lex *Lexer) scanQuote() Token {
+	startpos := lex.rpos
+	lex.next()
+	for lex.r != '"' {
+		lex.next()
+	}
+
+	if lex.r < 0 {
+		return makeErrorToken(startpos)
+	} else {
+        lex.next()
+		return Token{QUOTE, string(lex.buf[startpos:lex.rpos]), startpos}
+	}
+}
+
 func isAlpha(r rune) bool {
 	return 'a' <= r && r <= 'z' || 'A' <= r && r <= 'Z' || r == '_'
 }
@@ -105,15 +138,16 @@ func isDigit(r rune) bool {
 
 func main() {
 	//const sample = "本ähello  world"
-    const sample = "foo  \n bar baz"
+	const sample = `foo  
+                    3456 baz "jlob" 3 `
 	fmt.Println(sample)
 
 	nl := NewLexer([]byte(sample))
 	fmt.Println(nl)
 
-    fmt.Println(nl.NextToken())
-    fmt.Println(nl.NextToken())
-    fmt.Println(nl.NextToken())
-    fmt.Println(nl.NextToken())
-    fmt.Println(nl.NextToken())
+	fmt.Println(nl.NextToken())
+	fmt.Println(nl.NextToken())
+	fmt.Println(nl.NextToken())
+	fmt.Println(nl.NextToken())
+	fmt.Println(nl.NextToken())
 }
