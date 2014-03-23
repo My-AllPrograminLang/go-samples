@@ -10,18 +10,33 @@ type TokenName int
 // Values for TokenName
 const (
 	// Special tokens
-	EOF   TokenName = -1
-	ERROR           = iota
+	EOF TokenName = iota
+	ERROR
 	COMMENT
 	IDENTIFIER
 	NUMBER
 	QUOTE
 )
 
+var tokenNames = [...]string{
+	EOF:   "EOF",
+	ERROR: "ILLEGAL",
+
+	COMMENT: "COMMENT",
+
+	IDENTIFIER: "IDENTIFIER",
+	NUMBER:     "NUMBER",
+	QUOTE:      "QUOTE",
+}
+
 type Token struct {
 	Name TokenName
 	Val  string
-	pos  int
+	Pos  int
+}
+
+func (tok Token) String() string {
+	return fmt.Sprintf("Token{%s, '%s', %d}", tokenNames[tok.Name], tok.Val, tok.Pos)
 }
 
 func makeErrorToken(pos int) Token {
@@ -121,7 +136,7 @@ func (lex *Lexer) scanQuote() Token {
 	if lex.r < 0 {
 		return makeErrorToken(startpos)
 	} else {
-        lex.next()
+		lex.next()
 		return Token{QUOTE, string(lex.buf[startpos:lex.rpos]), startpos}
 	}
 }
@@ -138,8 +153,8 @@ func isDigit(r rune) bool {
 
 func main() {
 	//const sample = "本ähello  world"
-	const sample = `foo  
-                    3456 baz "jlob" 3 `
+	const sample = `foo
+3456 baz "本ä" 3 `
 	fmt.Println(sample)
 
 	nl := NewLexer([]byte(sample))
