@@ -10,8 +10,8 @@ type TokenName int
 // Values for TokenName
 const (
 	// Special tokens
-	EOF TokenName = iota
-	ERROR
+	ERROR TokenName = iota
+	EOF
 
 	COMMENT
 	IDENTIFIER
@@ -45,8 +45,8 @@ const (
 )
 
 var tokenNames = [...]string{
+	ERROR:       "ERROR",
 	EOF:         "EOF",
-	ERROR:       "ILLEGAL",
 	COMMENT:     "COMMENT",
 	IDENTIFIER:  "IDENTIFIER",
 	NUMBER:      "NUMBER",
@@ -144,15 +144,20 @@ func (lex *Lexer) NextToken() Token {
 		return Token{EOF, "", lex.nextpos}
 	}
 
-	if isAlpha(lex.r) {
+	if int(lex.r) < len(opTable); opName := opTable[lex.r]; opName != ERROR {
+			startpos := lex.rpos
+			lex.next()
+			return Token{opName, string(lex.buf[startpos:lex.rpos]), startpos}
+		}
+	} else if isAlpha(lex.r) {
 		return lex.scanIdentifier()
 	} else if isDigit(lex.r) {
 		return lex.scanNumber()
 	} else if lex.r == '"' {
 		return lex.scanQuote()
-	} else {
-		return makeErrorToken(lex.rpos)
 	}
+
+	return makeErrorToken(lex.rpos)
 }
 
 func (lex *Lexer) next() {

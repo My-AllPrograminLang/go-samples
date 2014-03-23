@@ -15,6 +15,7 @@ func ShowString(sample string) {
 	fmt.Println("Rune loop:")
 	for index, runeValue := range sample {
 		fmt.Printf("  %#U starts at byte position %d\n", runeValue, index)
+        fmt.Printf("  %d\n", runeValue)
 	}
 
 	fmt.Printf("Byte loop decoding with utf8:\n")
