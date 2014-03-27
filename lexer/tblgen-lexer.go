@@ -1,9 +1,10 @@
+// Lexer for the TableGen language.
 package main
 
 import (
 	"fmt"
 	"io/ioutil"
-	"os"
+	"log"
 	"time"
 	"unicode/utf8"
 )
@@ -284,23 +285,18 @@ func isDigit(r rune) bool {
 //------------------------------------------------------------------------------
 
 func main() {
-	const sample = `foo
-3456 +  baz "本ä" 3 > 2 // a comment
-// another
-f`
-	fmt.Println(sample)
-
+	// Simple "driver" that reads in an input file and then measures how long it
+	// takes for the lexer to populate a slice of tokens from this input.
 	filebuf, err := ioutil.ReadFile("/tmp/input.td")
 	if err != nil {
-		fmt.Println("ERROR:", err)
-		os.Exit(1)
+		log.Fatal("Error:", err)
 	}
 
 	nl := NewLexer(filebuf)
-	//fmt.Println(nl)
 
-	toks := make([]Token, 0, 2000)
+	//toks := []Token{}
 
+	toks := make([]Token, 0, 200000)
 	startTime := time.Now()
 	for {
 		nt := nl.NextToken()
@@ -312,5 +308,5 @@ f`
 	elapsed := time.Now()
 	fmt.Println("Elapsed:", elapsed.Sub(startTime))
 
-	fmt.Println(len(toks), toks[6].Pos)
+	fmt.Println(len(toks))
 }
