@@ -292,21 +292,21 @@ func main() {
 		log.Fatal("Error:", err)
 	}
 
-	nl := NewLexer(filebuf)
+	for i := 0; i < 10; i++ {
+		nl := NewLexer(filebuf)
 
-	//toks := []Token{}
-
-	toks := make([]Token, 0, 200000)
-	startTime := time.Now()
-	for {
-		nt := nl.NextToken()
-		toks = append(toks, nt)
-		if nt.Name == EOF {
-			break
+		toks := []Token{}
+		//toks := make([]Token, 0, 200000)
+		startTime := time.Now()
+		for {
+			nt := nl.NextToken()
+			toks = append(toks, nt)
+			if nt.Name == EOF {
+				break
+			}
 		}
+		elapsed := time.Now()
+		fmt.Println("Elapsed:", elapsed.Sub(startTime))
+		//fmt.Println(len(toks))
 	}
-	elapsed := time.Now()
-	fmt.Println("Elapsed:", elapsed.Sub(startTime))
-
-	fmt.Println(len(toks))
 }
