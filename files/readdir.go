@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"io/ioutil"
+	"log"
 	"os"
 )
 
@@ -24,4 +24,3 @@ func main() {
 		fmt.Println(info.Name(), "  |  IsDir =", info.IsDir())
 	}
 }
-
