@@ -9,12 +9,20 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func main() {
 	for _, url := range os.Args[1:] {
 		fmt.Println(url)
+		// Exercise 1.8: prepent http://
+		if !strings.HasPrefix(url, "http://") {
+			url = "http://" + url
+		}
+		fmt.Println(url)
 		resp, err := http.Get(url)
+		// Exercise 1.9: print status
+		fmt.Printf("status: %v\n", resp.Status)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "fetch: %v\n", err)
 			os.Exit(1)
