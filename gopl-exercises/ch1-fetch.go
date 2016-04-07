@@ -15,7 +15,7 @@ import (
 func main() {
 	for _, url := range os.Args[1:] {
 		fmt.Println(url)
-		// Exercise 1.8: prepent http://
+		// Exercise 1.8: prepend http://
 		if !strings.HasPrefix(url, "http://") {
 			url = "http://" + url
 		}
