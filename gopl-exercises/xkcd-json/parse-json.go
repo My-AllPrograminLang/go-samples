@@ -1,3 +1,5 @@
+// Simple example of loading a XKCD JSON file and unmarshalling some info from
+// it.
 package main
 
 import (
