@@ -14,12 +14,12 @@ import (
 
 func main() {
 	for _, url := range os.Args[1:] {
-		fmt.Println(url)
 		// Exercise 1.8: prepend http://
 		if !strings.HasPrefix(url, "http://") {
 			url = "http://" + url
 		}
-		fmt.Println(url)
+		fmt.Println("Getting URL: ", url)
+		fmt.Println("----------------------")
 		resp, err := http.Get(url)
 		// Exercise 1.9: print status
 		fmt.Printf("status: %v\n", resp.Status)
@@ -27,6 +27,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "fetch: %v\n", err)
 			os.Exit(1)
 		}
+		fmt.Println("----------------------")
 		// Exercise 1.7: use io.Copy
 		_, err = io.Copy(os.Stdout, resp.Body)
 		if err != nil {
