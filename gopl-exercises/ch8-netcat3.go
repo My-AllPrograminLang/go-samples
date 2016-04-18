@@ -21,10 +21,7 @@ func main() {
 	}
 	// For solving ex 8.3: use TCPConn type assertion so we can then call
 	// CloseWrite on it.
-	tcpconn, ok := conn.(*net.TCPConn)
-	if !ok {
-		log.Fatal("Didn't get TCPConn from TCP dial")
-	}
+	tcpconn := conn.(*net.TCPConn)
 	done := make(chan struct{})
 	log.Println("launching listener")
 	go func() {
