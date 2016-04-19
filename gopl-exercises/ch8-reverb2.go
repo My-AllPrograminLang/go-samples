@@ -28,13 +28,34 @@ func echo(c net.Conn, wg *sync.WaitGroup, shout string, delay time.Duration) {
 //!+
 func handleConn(c net.Conn) {
 	input := bufio.NewScanner(c)
+
+	// Exercise 8.8
+	// To do a select-based timeout on the scanner read, launch a goroutine that
+	// feeds each line scanned into a channel. Then we can select on this channel.
+	inChan := make(chan string)
+	go func() {
+		for input.Scan() {
+			inChan <- input.Text()
+		}
+		close(inChan)
+	}()
+
 	// WaitGroup for solving ex. 8.4
 	var wg sync.WaitGroup
-	for input.Scan() {
-		wg.Add(1)
-		go echo(c, &wg, input.Text(), 1*time.Second)
+LineLoop:
+	for {
+		select {
+		case line, ok := <-inChan:
+			if !ok {
+				break
+			}
+			wg.Add(1)
+			go echo(c, &wg, line, 1*time.Second)
+		case <-time.After(5 * time.Second):
+			log.Println("Disconnecting client after timeout")
+			break LineLoop
+		}
 	}
-	// NOTE: ignoring potential errors from input.Err()
 	wg.Wait()
 	tcpconn := c.(*net.TCPConn)
 	tcpconn.CloseWrite()
