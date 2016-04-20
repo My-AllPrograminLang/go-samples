@@ -1,17 +1,25 @@
 package main
 
-import "bytes"
-import "fmt"
-import "text/scanner"
+import (
+	"fmt"
+	"strings"
+	"text/scanner"
+)
 
 func main() {
-	const src = "hello 1"
+	const src = `
+	// This is scanned code.
+	if a > 10 {
+		someParsable = text
+	}`
 	var s scanner.Scanner
-	s.Init(bytes.NewBufferString(src))
-	tok := s.Scan()
+	s.Init(strings.NewReader(src))
+
+	// Set mode to not skip comments
+	s.Mode = scanner.ScanIdents | scanner.ScanFloats | scanner.ScanChars | scanner.ScanComments
+	var tok rune
 	for tok != scanner.EOF {
-		fmt.Println(scanner.TokenString(tok))
-		// do something with tok
 		tok = s.Scan()
+		fmt.Println("At position", s.Pos(), ":", s.TokenText())
 	}
 }
