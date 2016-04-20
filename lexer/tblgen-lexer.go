@@ -293,11 +293,10 @@ func main() {
 	}
 
 	for i := 0; i < 10; i++ {
-		nl := NewLexer(filebuf)
-
-		toks := []Token{}
-		//toks := make([]Token, 0, 200000)
+		//toks := []Token{}
+		toks := make([]Token, 0, 200000)
 		startTime := time.Now()
+		nl := NewLexer(filebuf)
 		for {
 			nt := nl.NextToken()
 			toks = append(toks, nt)
@@ -307,6 +306,7 @@ func main() {
 		}
 		elapsed := time.Now()
 		fmt.Println("Elapsed:", elapsed.Sub(startTime))
+		fmt.Println("toks[:10]: ", toks[:10])
 		//fmt.Println(len(toks))
 	}
 }

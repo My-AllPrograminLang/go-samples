@@ -5,6 +5,7 @@ import "unicode/utf8"
 
 func ShowString(sample string) {
 	fmt.Println("Println:", sample)
+	fmt.Println("Len: ", len(sample))
 
 	fmt.Printf("Byte loop:\n  ")
 	for i := 0; i < len(sample); i++ {
@@ -12,11 +13,11 @@ func ShowString(sample string) {
 	}
 	fmt.Printf("\n")
 
+	// A range loop over strings decodes runes and yields index, runeValue pairs.
 	fmt.Println("Rune loop:")
 	for index, runeValue := range sample {
 		fmt.Printf("  %#U starts at byte position %d\n", runeValue, index)
 		fmt.Printf("  %d\n", runeValue)
-
 	}
 
 	fmt.Printf("Byte loop decoding with utf8:\n")
