@@ -1,5 +1,5 @@
-// Basic websocket server, based on the code sample taken from
-// https://astaxie.gitbooks.io/build-web-application-with-golang/content/en/08.2.html
+// Websocket server that receives Person structs encoded in JSON from the
+// client. A JS client that sends messages is included.
 //
 // Serves on port 1234
 // The websocket handler listens on /ws
@@ -37,18 +37,23 @@ var page = `
 
             sock.onmessage = function(e) {
               console.log("message received: " + e.data);
+							var msg = JSON.parse(e.data);
+							console.log("JSON parsed: ", msg);
             }
         };
 
         function send() {
-          var msg = document.getElementById('message').value;
-          sock.send(msg);
+					var msg = {
+						Name: document.getElementById('name').value,
+						Emails: ["1@foo.org", "2@bar.com"],
+					};
+					sock.send(JSON.stringify(msg));
         };
     </script>
-    <h1>WebSocket Echo Test</h1>
+    <h1>WebSocket JSON sender</h1>
     <form>
         <p>
-            Message: <input id="message" type="text" value="Hello, world!">
+            Name: <input id="name" type="text" value="bruh">
         </p>
     </form>
     <button onclick="send();">Send Message</button>
@@ -56,36 +61,39 @@ var page = `
 </html>
 `
 
-func serveHtml(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, page)
+type Person struct {
+	Name   string
+	Emails []string
 }
 
-func echo(ws *websocket.Conn) {
-	var err error
+func receivePerson(ws *websocket.Conn) {
+	var person Person
+	err := websocket.JSON.Receive(ws, &person)
+	if err != nil {
+		fmt.Println("Can't receive")
+	} else {
 
-	for {
-		var msgFromClient string
-
-		if err = websocket.Message.Receive(ws, &msgFromClient); err != nil {
-			log.Printf("Receive failed: %v", err)
-			if !ws.IsClientConn() {
-				log.Printf("Client is no longer connected")
-			}
-			break
+		fmt.Println("Name: " + person.Name)
+		for _, e := range person.Emails {
+			fmt.Println("An email: " + e)
 		}
-		fmt.Printf("Received string from client \"%s\"\n", msgFromClient)
 
-		if err = websocket.Message.Send(ws, "thanks"); err != nil {
-			fmt.Println("Can't send")
-			break
+		// Tweak the name a bit and pong it back to the client.
+		person.Name = "!!" + person.Name
+		err := websocket.JSON.Send(ws, person)
+		if err != nil {
+			fmt.Println("Couldn't send msg " + err.Error())
 		}
 	}
 }
 
+func serveHtml(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, page)
+}
+
 func main() {
 	http.HandleFunc("/", serveHtml)
-	http.Handle("/ws", websocket.Handler(echo))
-
+	http.Handle("/ws", websocket.Handler(receivePerson))
 	if err := http.ListenAndServe(":1234", nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
