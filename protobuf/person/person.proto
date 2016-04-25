@@ -1,3 +1,4 @@
+// See go-samples/protobuf/README.rst for how to rebuild .pb.go from this file.
 syntax = "proto3";
 
 package person;

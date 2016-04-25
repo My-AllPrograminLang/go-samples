@@ -1,3 +1,4 @@
+// Sample protobuf client over websockets.
 package main
 
 import (

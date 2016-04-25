@@ -1,4 +1,4 @@
-// TODO: real serveHtml here with JS that does the protobuf thing
+// Sample protobuf server over websockets.
 package main
 
 import (
