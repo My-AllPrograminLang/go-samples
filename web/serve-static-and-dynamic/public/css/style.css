@@ -1,0 +1,11 @@
+div {
+ font-family: "Times New Roman", Georgia, Serif;
+ font-size: 2em;
+ width: 15.3em;
+ padding: 8px 8px; 
+ border: 2px solid #2B1B17;
+ border-radius: 10px;
+ color: #2B1B17;
+ text-shadow: 1px 1px #E5E4E2;
+ background: #FFFFFF;
+}
