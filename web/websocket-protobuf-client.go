@@ -15,6 +15,9 @@ var url = "ws://localhost:1234/ws"
 
 func main() {
 	conn, err := websocket.Dial(url, "", origin)
+	if err != nil {
+		log.Fatal("Cannot Dial:", err)
+	}
 
 	person := pb.Person{
 		Name:   "Fooder",
