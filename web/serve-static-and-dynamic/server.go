@@ -4,9 +4,6 @@
 // from the filesystem ("static"), whereas the dynamic server is done inline in
 // Go.
 
-// TODO: move CSS into its own dir too
-// TODO: make it a valid HTML5 file
-
 package main
 
 import (
