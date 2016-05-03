@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"unicode"
+	"unicode/utf8"
 )
 
 func importDir(dir string) *build.Package {
@@ -50,16 +52,40 @@ func parsePackage(pkg *build.Package) {
 	astPkg := pkgs[pkg.Name]
 
 	docPkg := doc.New(astPkg, pkg.ImportPath, doc.AllDecls)
-	for _, typ := range docPkg.Types {
-		docPkg.Consts = append(docPkg.Consts, typ.Consts...)
-		docPkg.Vars = append(docPkg.Vars, typ.Vars...)
-		docPkg.Funcs = append(docPkg.Funcs, typ.Funcs...)
-	}
+	//for _, typ := range docPkg.Types {
+	//docPkg.Consts = append(docPkg.Consts, typ.Consts...)
+	//docPkg.Vars = append(docPkg.Vars, typ.Vars...)
+	//docPkg.Funcs = append(docPkg.Funcs, typ.Funcs...)
+	//}
 
-	// TODO: here
 	fmt.Println(pkg.ImportPath)
 	fmt.Println(astPkg.Name)
-	fmt.Println(astPkg)
+
+	fmt.Println("types:")
+	for _, typ := range docPkg.Types {
+		if isExported(typ.Name) {
+			fmt.Printf("%s ", typ.Name)
+		}
+	}
+	fmt.Println()
+
+	fmt.Println("funcs:")
+	for _, f := range docPkg.Funcs {
+		if isExported(f.Name) {
+			fmt.Printf("%s ", f.Name)
+		}
+	}
+
+	// TODO: all vars point to a single package-variables id in the HTML link.
+	fmt.Println("vars:")
+	for _, v := range docPkg.Vars {
+		for _, name := range v.Names {
+			if isExported(name) {
+				fmt.Printf("%s ", name)
+			}
+		}
+	}
+	fmt.Println()
 }
 
 func processPath(dir string) {
@@ -67,6 +93,16 @@ func processPath(dir string) {
 	if pkg != nil {
 		parsePackage(pkg)
 	}
+}
+
+// startsWithUpper reports whether the name starts with an uppercase letter.
+func startsWithUpper(name string) bool {
+	ch, _ := utf8.DecodeRuneInString(name)
+	return unicode.IsUpper(ch)
+}
+
+func isExported(name string) bool {
+	return startsWithUpper(name)
 }
 
 func walker(path string, info os.FileInfo, err error) error {
