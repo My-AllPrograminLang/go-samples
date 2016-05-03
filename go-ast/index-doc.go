@@ -6,6 +6,7 @@ import (
 	"go/doc"
 	"go/parser"
 	"go/token"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -177,9 +178,9 @@ func processPath(dir string) *Package {
 	buildPkg := importDir(dir)
 	if buildPkg != nil {
 		pkg := parsePackage(buildPkg)
-		fmt.Println(pkg)
+		log.Println(pkg)
 		numSyms, totalSymLen := pkg.Stats()
-		fmt.Printf("Stats: %d syms, total len = %d\n", numSyms, totalSymLen)
+		log.Printf("Stats: %d syms, total len = %d\n", numSyms, totalSymLen)
 		return pkg
 	}
 	return nil
@@ -196,12 +197,15 @@ func isExported(name string) bool {
 }
 
 func main() {
+	// Configure logging
+	log.SetOutput(ioutil.Discard)
+
 	rootdir := os.Args[1]
 
 	var pkgs []*Package
 	walker := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			fmt.Println("ERROR: walking", path)
+			log.Println("ERROR: walking", path)
 			return err
 		}
 
@@ -209,7 +213,7 @@ func main() {
 			if info.Name() == "internal" || info.Name() == "testdata" {
 				return filepath.SkipDir
 			}
-			fmt.Println("=======>", path)
+			log.Println("=======>", path)
 			pkg := processPath(path)
 			if pkg != nil {
 				pkgs = append(pkgs, pkg)
