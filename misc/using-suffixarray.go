@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"index/suffixarray"
-	"regexp"
+	"log"
+	"os"
 	"strings"
+	"time"
 )
 
 // getStringFromIndex finds the string in data based on given index.
@@ -30,34 +33,56 @@ func getStringFromIndex(data []byte, index int) string {
 }
 
 func main() {
-	words := []string{
-		"aardvark",
-		"happy",
-		"hello",
-		"hero",
-		"he",
-		"hotel",
-		"hahem",
+	//words := []string{
+	//"aardvark",
+	//"happy",
+	//"hello",
+	//"hero",
+	//"he",
+	//"hotel",
+	//"hahem",
+	//}
+
+	f, err := os.Open(`/usr/share/dict/words`)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	t1 := time.Now()
+	var words []string
+	input := bufio.NewScanner(f)
+	input.Split(bufio.ScanLines)
+	for input.Scan() {
+		words = append(words, strings.ToLower(input.Text()))
+	}
+	fmt.Println(len(words))
+	log.Printf("Reading: %s", time.Since(t1))
+
 	// Use \x00 to delimit strings.
+	t1 = time.Now()
 	data := []byte("\x00" + strings.Join(words, "\x00") + "\x00")
+	log.Printf("Building data: %s", time.Since(t1))
+
+	t1 = time.Now()
 	sa := suffixarray.New(data)
+	log.Printf("Building suffixarray: %s", time.Since(t1))
+
 	buf := &bytes.Buffer{}
 	sa.Write(buf)
 	fmt.Println("Serialized size:", buf.Len())
 
 	fmt.Println("Using Lookup:")
-	indices := sa.Lookup([]byte("he"), -1)
+	indices := sa.Lookup([]byte("hex"), -1)
 
 	for _, idx := range indices {
 		fmt.Println(getStringFromIndex(data, idx))
 	}
 
-	fmt.Println("Using FindAllIndex:")
-	r := regexp.MustCompile("he")
-	matches := sa.FindAllIndex(r, -1)
+	//fmt.Println("Using FindAllIndex:")
+	//r := regexp.MustCompile("he")
+	//matches := sa.FindAllIndex(r, -1)
 
-	fmt.Println(matches)
+	//fmt.Println(matches)
 
 	//fmt.Println(idx)
 

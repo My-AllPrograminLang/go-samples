@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"go/build"
 	"go/doc"
@@ -13,6 +14,11 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+)
+
+var (
+	stats     = flag.Bool("stats", false, "show stats")
+	dumpNames = flag.Bool("dumpnames", false, "dump all names")
 )
 
 type Type struct {
@@ -96,20 +102,22 @@ func parsePackage(buildPkg *build.Package) *Package {
 
 	astPkg := buildPkgs[buildPkg.Name]
 	docPkg := doc.New(astPkg, buildPkg.ImportPath, doc.AllDecls)
-	//for _, typ := range docPkg.Types {
-	//docPkg.Consts = append(docPkg.Consts, typ.Consts...)
-	//docPkg.Vars = append(docPkg.Vars, typ.Vars...)
-	//docPkg.Funcs = append(docPkg.Funcs, typ.Funcs...)
-	//}
 
 	pkg := &Package{
 		Name:       buildPkg.Name,
 		ImportPath: buildPkg.ImportPath}
 
+	if *dumpNames {
+		fmt.Println(buildPkg.ImportPath)
+	}
+
 	// Populate pkg's non-type symbols with exported functions and vars.
 	for _, f := range docPkg.Funcs {
 		if isExported(f.Name) {
 			pkg.Syms = append(pkg.Syms, f.Name)
+			if *dumpNames {
+				fmt.Println(pkg.ImportPath + "." + f.Name)
+			}
 		}
 	}
 
@@ -118,6 +126,9 @@ func parsePackage(buildPkg *build.Package) *Package {
 		for _, name := range v.Names {
 			if isExported(name) {
 				pkg.Syms = append(pkg.Syms, name)
+				if *dumpNames {
+					fmt.Println(pkg.ImportPath + "." + name)
+				}
 			}
 		}
 	}
@@ -126,6 +137,9 @@ func parsePackage(buildPkg *build.Package) *Package {
 		for _, name := range c.Names {
 			if isExported(name) {
 				pkg.Syms = append(pkg.Syms, name)
+				if *dumpNames {
+					fmt.Println(pkg.ImportPath + "." + name)
+				}
 			}
 		}
 	}
@@ -133,21 +147,33 @@ func parsePackage(buildPkg *build.Package) *Package {
 	for _, docType := range docPkg.Types {
 		if isExported(docType.Name) {
 			t := Type{Name: docType.Name}
+			if *dumpNames {
+				fmt.Println(pkg.ImportPath + "." + t.Name)
+			}
 
 			for _, f := range docType.Funcs {
 				if isExported(f.Name) {
 					t.Syms = append(t.Syms, f.Name)
+					if *dumpNames {
+						fmt.Println(pkg.ImportPath + "." + t.Name + "." + f.Name)
+					}
 				}
 			}
 			for _, m := range docType.Methods {
 				if isExported(m.Name) {
 					t.Syms = append(t.Syms, m.Name)
+					if *dumpNames {
+						fmt.Println(pkg.ImportPath + "." + t.Name + "." + m.Name)
+					}
 				}
 			}
 			for _, v := range docType.Vars {
 				for _, name := range v.Names {
 					if isExported(name) {
 						t.Syms = append(t.Syms, name)
+						if *dumpNames {
+							fmt.Println(pkg.ImportPath + "." + t.Name + "." + name)
+						}
 					}
 				}
 			}
@@ -155,6 +181,9 @@ func parsePackage(buildPkg *build.Package) *Package {
 				for _, name := range c.Names {
 					if isExported(name) {
 						t.Syms = append(t.Syms, name)
+						if *dumpNames {
+							fmt.Println(pkg.ImportPath + "." + t.Name + "." + name)
+						}
 					}
 				}
 			}
@@ -162,14 +191,6 @@ func parsePackage(buildPkg *build.Package) *Package {
 			pkg.Types = append(pkg.Types, t)
 		}
 	}
-
-	//fmt.Println("types:")
-	//for _, typ := range docPkg.Types {
-	//if isExported(typ.Name) {
-	//fmt.Printf("%s ", typ.Name)
-	//}
-	//}
-	//fmt.Println()
 
 	return pkg
 }
@@ -197,10 +218,11 @@ func isExported(name string) bool {
 }
 
 func main() {
+	flag.Parse()
 	// Configure logging
 	log.SetOutput(ioutil.Discard)
 
-	rootdir := os.Args[1]
+	rootdir := flag.Arg(0)
 
 	var pkgs []*Package
 	walker := func(path string, info os.FileInfo, err error) error {
@@ -224,10 +246,6 @@ func main() {
 	}
 	filepath.Walk(rootdir, walker)
 
-	fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
-	fmt.Println("Totals...")
-	fmt.Printf("%d packages\n", len(pkgs))
-
 	var nSyms int
 	var nSize int
 	for _, pkg := range pkgs {
@@ -236,6 +254,11 @@ func main() {
 		nSize += totalSymLen
 	}
 
-	fmt.Printf("num symbols = %d\n", nSyms)
-	fmt.Printf("total size = %d\n", nSize)
+	if *stats {
+		fmt.Println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+		fmt.Println("Totals...")
+		fmt.Printf("%d packages\n", len(pkgs))
+		fmt.Printf("num symbols = %d\n", nSyms)
+		fmt.Printf("total size = %d\n", nSize)
+	}
 }
