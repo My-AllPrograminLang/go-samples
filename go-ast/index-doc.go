@@ -1,3 +1,4 @@
+// Run with -dumpnames to dump all found names
 package main
 
 import (
@@ -155,12 +156,17 @@ func parsePackage(buildPkg *build.Package) *Package {
 				if isExported(f.Name) {
 					t.Syms = append(t.Syms, f.Name)
 					if *dumpNames {
-						fmt.Println(pkg.ImportPath + "." + t.Name + "." + f.Name)
+						// For functions returning the type we don't need to prepend the
+						// type name.
+						fmt.Println(pkg.ImportPath + "." + f.Name)
 					}
 				}
 			}
 			for _, m := range docType.Methods {
 				if isExported(m.Name) {
+					if m.Name == "NewScanner" {
+						fmt.Println(m)
+					}
 					t.Syms = append(t.Syms, m.Name)
 					if *dumpNames {
 						fmt.Println(pkg.ImportPath + "." + t.Name + "." + m.Name)
