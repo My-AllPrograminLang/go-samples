@@ -46,6 +46,7 @@ func main() {
 	for path := range m {
 		paths = append(paths, path)
 	}
+	fmt.Printf("Number of paths: %d\n", len(paths))
 	sort.Strings(paths) // HL
 	for _, path := range paths {
 		fmt.Printf("%x  %s\n", m[path], path)

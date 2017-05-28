@@ -8,7 +8,10 @@ import (
 )
 
 // This demonstrates how downstream stages can notify upstream senders to stop
-// sending / cancel by closing a 'done' channel.
+// sending / cancel by closing a 'done' channel. A single done channel can work
+// for multiple consumers, since we signal we're done by closing the channel -
+// this releases the selects in all the consumers. The close is effectively
+// a broadcast signal to the consumers.
 
 func gen(done <-chan struct{}, nums ...int) <-chan int {
 	out := make(chan int)
@@ -23,6 +26,8 @@ func gen(done <-chan struct{}, nums ...int) <-chan int {
 			// any more.
 			select {
 			case out <- n:
+			// A receive on a closed channel can always proceed immediately,
+			// yielding the element type's zero value.
 			case <-done:
 				return
 			}
