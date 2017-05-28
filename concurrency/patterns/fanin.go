@@ -1,3 +1,4 @@
+// Fan-in from multiple channels using separate go-routines.
 package main
 
 import (
@@ -39,6 +40,7 @@ func fanIn(input1, input2 <-chan string) <-chan string {
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	c := fanIn(boring("Joe"), boring("Ann"))
 	for i := 0; i < 10; i++ {
 		fmt.Println(<-c)
