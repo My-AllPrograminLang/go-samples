@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -13,11 +14,9 @@ func factorize(n int64) []int64 {
 	for {
 		if n == 1 {
 			return factors
-		}
-		r := n % p
-		if r == 0 {
+		} else if n%p == 0 {
 			factors = append(factors, p)
-			n = n / p
+			n /= p
 		} else if p*p >= n {
 			factors = append(factors, n)
 			return factors
@@ -58,6 +57,11 @@ func concurrentFactorize(nums []int64) FactorMap {
 }
 
 func main() {
+	nums := []int64{1, 2, 3, 6, 12, 19, 24, 30}
+	for _, n := range nums {
+		fmt.Printf("factors of %d are %v\n", n, factorize(n))
+	}
+
 	var n int64 = 4477457 * 982451653
 	var is []int64
 	for i := 0; i < 30; i++ {
