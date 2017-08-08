@@ -6,7 +6,7 @@ import (
 )
 
 type Expression interface {
-	Evaluate() float64
+	Eval() float64
 }
 
 type Stringable interface {
@@ -17,7 +17,7 @@ type Constant struct {
 	value float64
 }
 
-func (c *Constant) Evaluate() float64 {
+func (c *Constant) Eval() float64 {
 	return c.value
 }
 
@@ -30,11 +30,15 @@ type BinPlus struct {
 	right Expression
 }
 
-func (bp *BinPlus) Evaluate() float64 {
-	return bp.left.Evaluate() + bp.right.Evaluate()
+func (bp *BinPlus) Eval() float64 {
+	return bp.left.Eval() + bp.right.Eval()
 }
 
 func (bp *BinPlus) ToString() string {
+	// The moment of truth is here... bp.left is an Expression, which does not
+	// have a ToString method. Obviously this will only work if left and right
+	// implement the Stringable interface. The type assertion makes this
+	// expectation explicit and will panic otherwise.
 	ls := bp.left.(Stringable)
 	rs := bp.right.(Stringable)
 	return fmt.Sprintf("(%s + %s)", ls.ToString(), rs.ToString())
@@ -46,7 +50,7 @@ func main() {
 	// constants
 	c := Constant{value: 26.4}
 
-	fmt.Printf("c Evaluate = %g\n", c.Evaluate())
+	fmt.Printf("c Eval = %g\n", c.Eval())
 	fmt.Printf("c ToString = %s\n", c.ToString())
 
 	c11 := Constant{value: 1.1}
@@ -54,6 +58,6 @@ func main() {
 	c33 := Constant{value: 3.3}
 	bp := BinPlus{left: &BinPlus{left: &c11, right: &c22}, right: &c33}
 
-	fmt.Printf("bp Evaluate = %g\n", bp.Evaluate())
+	fmt.Printf("bp Eval = %g\n", bp.Eval())
 	fmt.Printf("bp ToString = %s\n", bp.ToString())
 }
